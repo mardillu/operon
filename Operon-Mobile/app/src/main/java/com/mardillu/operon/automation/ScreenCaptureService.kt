@@ -70,6 +70,9 @@ class ScreenCaptureService : Service() {
         val mpm = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         mediaProjection = mpm.getMediaProjection(resultCode, resultData)
         
+        // Android 14 requires a callback to be registered before creating a virtual display
+        mediaProjection?.registerCallback(object : MediaProjection.Callback() {}, null)
+        
         val metrics = resources.displayMetrics
         val width = metrics.widthPixels
         val height = metrics.heightPixels
