@@ -100,9 +100,13 @@ class ScreenCaptureService : Service() {
         val width = image.width + rowPadding / pixelStride
         val bitmap = Bitmap.createBitmap(width, image.height, Bitmap.Config.ARGB_8888)
         bitmap.copyPixelsFromBuffer(buffer)
+
+        // Capture dimensions before closing to prevent IllegalStateException
+        val imgWidth = image.width
+        val imgHeight = image.height
         image.close()
 
-        val croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, image.width, image.height)
+        val croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, imgWidth, imgHeight)
         
         val outputStream = ByteArrayOutputStream()
         // Resize slightly to save payload size if needed, but 70% quality JPEG is a start
