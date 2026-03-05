@@ -9,8 +9,8 @@ on:
       - '.github/workflows/backend-deploy.yml'
 
 env:
-  PROJECT_ID: your-google-cloud-project-id # Replace with your GCP project ID
-  REGION: us-central1 # Replace with your target GCP region
+  PROJECT_ID: gemini-live-agent-challenge-1
+  REGION: us-central1
   SERVICE_NAME: autopilot-agent
 
 jobs:
