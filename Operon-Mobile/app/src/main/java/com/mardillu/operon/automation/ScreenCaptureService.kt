@@ -45,14 +45,17 @@ class ScreenCaptureService : Service() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        // Moved startForeground to onStartCommand for Android 14 compatibility
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // On Android 14+, you MUST call startForeground BEFORE getMediaProjection
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
         } else {
             startForeground(1, createNotification())
         }
-    }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val resultCode = intent?.getIntExtra(EXTRA_RESULT_CODE, 0) ?: 0
         val resultData = intent?.getParcelableExtra<Intent>(EXTRA_RESULT_DATA)
 
@@ -66,6 +69,9 @@ class ScreenCaptureService : Service() {
     private fun setupMediaProjection(resultCode: Int, resultData: Intent) {
         val mpm = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         mediaProjection = mpm.getMediaProjection(resultCode, resultData)
+        
+        // Android 14 requires a callback to be registered before creating a virtual display
+        mediaProjection?.registerCallback(object : MediaProjection.Callback() {}, null)
         
         val metrics = resources.displayMetrics
         val width = metrics.widthPixels
@@ -94,9 +100,13 @@ class ScreenCaptureService : Service() {
         val width = image.width + rowPadding / pixelStride
         val bitmap = Bitmap.createBitmap(width, image.height, Bitmap.Config.ARGB_8888)
         bitmap.copyPixelsFromBuffer(buffer)
+
+        // Capture dimensions before closing to prevent IllegalStateException
+        val imgWidth = image.width
+        val imgHeight = image.height
         image.close()
 
-        val croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, image.width, image.height)
+        val croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, imgWidth, imgHeight)
         
         val outputStream = ByteArrayOutputStream()
         // Resize slightly to save payload size if needed, but 70% quality JPEG is a start
