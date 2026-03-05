@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 object NetworkModule {
     // Note: 10.0.2.2 is the localhost loopback for Android Emulators
-    private const val BASE_URL = "http://10.0.2.2:8080/"
+    private const val BASE_URL = "https://autopilot-agent-nvpix2itpa-uc.a.run.app/"
 
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
