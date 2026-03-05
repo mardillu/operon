@@ -54,8 +54,8 @@ export class GeminiService {
     private model: string;
 
     constructor() {
-        const isDev = process.env.APP_ENV === 'dev' || process.env.NODE_ENV === 'development';
-        this.model = isDev ? 'gemini-flash-lite-latest' : 'gemini-3.1-flash-lite-preview';
+        const env = (process.env.APP_ENV || 'LIVE').toUpperCase();
+        this.model = env === 'DEV' ? 'gemini-flash-lite-latest' : 'gemini-3.1-flash-lite-preview';
 
         this.ai = new GoogleGenAI({
             vertexai: true,
