@@ -45,12 +45,20 @@ fun HomeScreen(viewModel: MainViewModel) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            startListening(speechRecognizer, context, onResult = { text ->
-                spokenText = text
-                if (text.isNotBlank()) {
-                    viewModel.toggleAgent(text)
-                }
-            }, onStateChanged = { listening -> isListening = listening })
+            startListening(
+                recognizer = speechRecognizer, 
+                context = context, 
+                onPartialResult = { text ->
+                    spokenText = text
+                },
+                onFinalResult = { text ->
+                    spokenText = text
+                    if (text.isNotBlank()) {
+                        viewModel.toggleAgent(text)
+                    }
+                }, 
+                onStateChanged = { listening -> isListening = listening }
+            )
         }
     }
 
@@ -192,7 +200,8 @@ fun PulsingMicButton(isListening: Boolean, onClick: () -> Unit) {
 private fun startListening(
     recognizer: SpeechRecognizer,
     context: android.content.Context,
-    onResult: (String) -> Unit,
+    onPartialResult: (String) -> Unit,
+    onFinalResult: (String) -> Unit,
     onStateChanged: (Boolean) -> Unit
 ) {
     val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -208,19 +217,19 @@ private fun startListening(
         override fun onEndOfSpeech() { onStateChanged(false) }
         override fun onError(error: Int) { 
             onStateChanged(false)
-            onResult("Error listening. Please try again.") 
+            onPartialResult("Error listening. Please try again.") 
         }
         override fun onResults(results: Bundle?) {
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             if (!matches.isNullOrEmpty()) {
-                onResult(matches[0])
+                onFinalResult(matches[0])
             }
             onStateChanged(false)
         }
         override fun onPartialResults(partialResults: Bundle?) {
             val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             if (!matches.isNullOrEmpty()) {
-                onResult(matches[0] + "...") // Show partial text
+                onPartialResult(matches[0] + "...") // Show partial text
             }
         }
         override fun onEvent(eventType: Int, params: Bundle?) {}
