@@ -12,7 +12,7 @@ env:
   PROJECT_ID: gemini-live-agent-challenge-1
   REGION: us-central1
   SERVICE_NAME: autopilot-agent
-  APP_ENV: LIVE
+  APP_ENV: DEV
 
 jobs:
   deploy:
