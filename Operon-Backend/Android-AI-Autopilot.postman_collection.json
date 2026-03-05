@@ -1,0 +1,65 @@
+{
+    "info": {
+        "name": "Android AI Autopilot",
+        "description": "API collection for the Android AI Autopilot backend agent",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:8080/health",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080",
+                    "path": [
+                        "health"
+                    ]
+                },
+                "description": "Checks the health status of the API."
+            },
+            "response": []
+        },
+        {
+            "name": "Agent Step",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"sessionId\": \"session-12345\",\n  \"goal\": \"Book a ride to airport\",\n  \"screenshotBase64\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=\",\n  \"uiTree\": { \"type\": \"AccessibilityNodeInfo\", \"children\": [] }\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "http://localhost:8080/agent/step",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8080",
+                    "path": [
+                        "agent",
+                        "step"
+                    ]
+                },
+                "description": "Sends a snapshot (UI tree and/or screenshot) and a goal to the agent, which responds with the next structured UI action."
+            },
+            "response": []
+        }
+    ]
+}

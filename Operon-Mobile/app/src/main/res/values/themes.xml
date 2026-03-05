@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.Operon" parent="Theme.MaterialComponents.Light" />
+</resources>

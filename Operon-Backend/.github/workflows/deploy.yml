@@ -1,0 +1,55 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: your-google-cloud-project-id # Replace with your GCP project ID
+  REGION: us-central1 # Replace with your target GCP region
+  SERVICE_NAME: autopilot-agent
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          # Prefer Workload Identity Federation:
+          # workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+          # service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+          
+          # OR use standard service account JSON key (less secure but easier to setup):
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          source: ./ # This automatically runs a buildpack or uses the Dockerfile
+          env_vars: |
+            GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }}
+            GOOGLE_CLOUD_LOCATION=${{ env.REGION }}
+            FIRESTORE_ENABLED=true
+            # Note: You'll also need to pass the GEMINI_API_KEY or configure Vertex credentials properly
+          
+      - name: Show Output
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"

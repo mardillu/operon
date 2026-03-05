@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Operon</string>
+    <string name="accessibility_service_description">Operon uses accessibility services to navigate and interact with other apps on your behalf to execute your voice commands.</string>
+</resources>
