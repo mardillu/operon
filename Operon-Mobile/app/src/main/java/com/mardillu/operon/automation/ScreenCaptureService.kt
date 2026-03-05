@@ -49,18 +49,18 @@ class ScreenCaptureService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // On Android 14+, you MUST call startForeground BEFORE getMediaProjection
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        } else {
+            startForeground(1, createNotification())
+        }
+
         val resultCode = intent?.getIntExtra(EXTRA_RESULT_CODE, 0) ?: 0
         val resultData = intent?.getParcelableExtra<Intent>(EXTRA_RESULT_DATA)
 
         if (resultCode != 0 && resultData != null && mediaProjection == null) {
             setupMediaProjection(resultCode, resultData)
-        }
-
-        // Must be called AFTER setupMediaProjection (getMediaProjection) on Android 14+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
-        } else {
-            startForeground(1, createNotification())
         }
 
         return START_NOT_STICKY
