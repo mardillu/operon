@@ -55,7 +55,8 @@ export class GeminiService {
 
     constructor() {
         const env = (process.env.APP_ENV || 'LIVE').toUpperCase();
-        this.model = env === 'DEV' ? 'gemini-flash-lite-latest' : 'gemini-3.1-flash-lite-preview';
+        // Valid Vertex AI model names for the us-central1 region
+        this.model = env === 'DEV' ? 'gemini-2.0-flash-lite-preview-02-05' : 'gemini-2.0-flash-001';
 
         this.ai = new GoogleGenAI({
             vertexai: true,
