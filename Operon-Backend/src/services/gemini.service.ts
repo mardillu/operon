@@ -51,9 +51,12 @@ JSON Response Format (Example):
 
 export class GeminiService {
     private ai: GoogleGenAI;
-    private model: string = 'gemini-3.1-flash-lite-preview';
+    private model: string;
 
     constructor() {
+        const isDev = process.env.APP_ENV === 'dev' || process.env.NODE_ENV === 'development';
+        this.model = isDev ? 'gemini-flash-lite-latest' : 'gemini-3.0-pro';
+
         this.ai = new GoogleGenAI({
             vertexai: true,
             project: process.env.GOOGLE_CLOUD_PROJECT || '',
