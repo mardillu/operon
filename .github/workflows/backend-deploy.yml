@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'Operon-Backend/**'
+      - '.github/workflows/backend-deploy.yml'
 
 env:
   PROJECT_ID: your-google-cloud-project-id # Replace with your GCP project ID
@@ -44,7 +47,7 @@ jobs:
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          source: ./ # This automatically runs a buildpack or uses the Dockerfile
+          source: ./Operon-Backend # Automatically builds the backend folder
           env_vars: |
             GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }}
             GOOGLE_CLOUD_LOCATION=${{ env.REGION }}
