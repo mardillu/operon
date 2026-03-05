@@ -51,7 +51,7 @@ JSON Response Format (Example):
 
 export class GeminiService {
     private ai: GoogleGenAI;
-    private model: string = 'gemini-3.0-pro'; // Using the latest Gemini 3 model as requested
+    private model: string = 'gemini-3.1-flash-lite-preview';
 
     constructor() {
         this.ai = new GoogleGenAI({
