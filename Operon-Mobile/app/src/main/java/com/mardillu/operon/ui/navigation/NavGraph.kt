@@ -16,11 +16,12 @@ object Routes {
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
+    startDestination: String,
     viewModel: MainViewModel,
     onEnableAccessibility: () -> Unit,
     onRequestScreenCapture: () -> Unit
 ) {
-    NavHost(navController = navController, startDestination = Routes.ONBOARDING) {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(
                 onEnableAccessibility = onEnableAccessibility,

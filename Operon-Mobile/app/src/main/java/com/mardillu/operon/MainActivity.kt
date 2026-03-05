@@ -37,12 +37,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        val startDestination = if (isAccessibilityServiceEnabled()) {
+            com.mardillu.operon.ui.navigation.Routes.HOME
+        } else {
+            com.mardillu.operon.ui.navigation.Routes.ONBOARDING
+        }
+        
         setContent {
             OperonTheme {
                 val navController = rememberNavController()
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavGraph(
                         navController = navController,
+                        startDestination = startDestination,
                         viewModel = viewModel,
                         onEnableAccessibility = {
                             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -59,5 +67,26 @@ class MainActivity : ComponentActivity() {
     private fun requestScreenCapture() {
         val mpm = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         screenCaptureLauncher.launch(mpm.createScreenCaptureIntent())
+    }
+    
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        var accessibilityEnabled = 0
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(
+                contentResolver,
+                android.provider.Settings.Secure.ACCESSIBILITY_ENABLED
+            )
+        } catch (e: Settings.SettingNotFoundException) {
+            e.printStackTrace()
+        }
+        
+        if (accessibilityEnabled == 1) {
+            val services = Settings.Secure.getString(
+                contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            )
+            return services?.contains(packageName) == true
+        }
+        return false
     }
 }
