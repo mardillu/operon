@@ -45,11 +45,7 @@ class ScreenCaptureService : Service() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
-        } else {
-            startForeground(1, createNotification())
-        }
+        // Moved startForeground to onStartCommand for Android 14 compatibility
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -58,6 +54,13 @@ class ScreenCaptureService : Service() {
 
         if (resultCode != 0 && resultData != null && mediaProjection == null) {
             setupMediaProjection(resultCode, resultData)
+        }
+
+        // Must be called AFTER setupMediaProjection (getMediaProjection) on Android 14+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        } else {
+            startForeground(1, createNotification())
         }
 
         return START_NOT_STICKY
