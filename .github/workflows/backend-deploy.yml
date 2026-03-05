@@ -48,6 +48,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           source: ./Operon-Backend # Automatically builds the backend folder
+          flags: '--allow-unauthenticated'
           env_vars: |
             GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }}
             GOOGLE_CLOUD_LOCATION=${{ env.REGION }}
