@@ -89,6 +89,12 @@ class AutopilotAccessibilityService : AccessibilityService() {
             ActionType.back -> {
                 performGlobalAction(GLOBAL_ACTION_BACK)
             }
+            ActionType.home -> {
+                performGlobalAction(GLOBAL_ACTION_HOME)
+            }
+            ActionType.recent_apps -> {
+                performGlobalAction(GLOBAL_ACTION_RECENTS)
+            }
             ActionType.scroll -> {
                 val rootNode = rootInActiveWindow
                 var scrolled = false
