@@ -6,7 +6,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CompletableDeferred
 import com.mardillu.operon.automation.AgentOrchestrator
+import com.mardillu.operon.data.AgentAction
+import com.mardillu.operon.data.ExecutionMode
 
 class MainViewModel : ViewModel() {
 
@@ -18,7 +21,12 @@ class MainViewModel : ViewModel() {
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
-    fun toggleAgent(goal: String) {
+    private val _pendingAction = MutableStateFlow<AgentAction?>(null)
+    val pendingAction: StateFlow<AgentAction?> = _pendingAction.asStateFlow()
+
+    private var approvalDeferred: CompletableDeferred<Boolean>? = null
+
+    fun toggleAgent(goal: String, currentMode: ExecutionMode) {
         if (orchestrator.isRunning) {
             orchestrator.stop()
             _isRunning.value = false
@@ -30,14 +38,36 @@ class MainViewModel : ViewModel() {
             }
             _isRunning.value = true
             _logs.value = emptyList() // Clear previous logs
-            orchestrator.start(goal) { logMessage ->
-                addLog(logMessage)
-                // If orchestrator stopped itself, sync state
-                if (!orchestrator.isRunning && _isRunning.value) {
-                    _isRunning.value = false
+            orchestrator.start(
+                goal = goal,
+                executionMode = currentMode,
+                onRequireApproval = { action -> requestUserApproval(action) },
+                onLog = { logMessage ->
+                    addLog(logMessage)
+                    // If orchestrator stopped itself, sync state
+                    if (!orchestrator.isRunning && _isRunning.value) {
+                        _isRunning.value = false
+                        _pendingAction.value = null
+                        approvalDeferred?.cancel()
+                        approvalDeferred = null
+                    }
                 }
-            }
+            )
         }
+    }
+
+    private suspend fun requestUserApproval(action: AgentAction): Boolean {
+        val deferred = CompletableDeferred<Boolean>()
+        approvalDeferred = deferred
+        _pendingAction.value = action
+        val result = deferred.await()
+        _pendingAction.value = null
+        approvalDeferred = null
+        return result
+    }
+
+    fun respondToApproval(approved: Boolean) {
+        approvalDeferred?.complete(approved)
     }
 
     private fun addLog(message: String) {

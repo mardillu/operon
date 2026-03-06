@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Settings
+import com.mardillu.operon.data.ExecutionMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,13 +33,19 @@ import com.mardillu.operon.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: MainViewModel) {
+fun HomeScreen(
+    viewModel: MainViewModel,
+    currentMode: ExecutionMode,
+    onModeSelected: (ExecutionMode) -> Unit
+) {
     val logs by viewModel.logs.collectAsState()
     val isRunning by viewModel.isRunning.collectAsState()
+    val pendingAction by viewModel.pendingAction.collectAsState()
     
     val context = LocalContext.current
     var isListening by remember { mutableStateOf(false) }
     var spokenText by remember { mutableStateOf("Tap the microphone and say your goal...") }
+    var showSettingsDialog by remember { mutableStateOf(false) }
 
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
     
@@ -54,7 +62,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                 onFinalResult = { text ->
                     spokenText = text
                     if (text.isNotBlank()) {
-                        viewModel.toggleAgent(text)
+                        viewModel.toggleAgent(text, currentMode)
                     }
                 }, 
                 onStateChanged = { listening -> isListening = listening }
@@ -72,6 +80,11 @@ fun HomeScreen(viewModel: MainViewModel) {
         topBar = {
             TopAppBar(
                 title = { Text("Operon Autopilot") },
+                actions = {
+                    IconButton(onClick = { showSettingsDialog = true }) {
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
@@ -124,7 +137,7 @@ fun HomeScreen(viewModel: MainViewModel) {
 
                 if (isRunning) {
                     Button(
-                        onClick = { viewModel.toggleAgent("") }, // Stop
+                        onClick = { viewModel.toggleAgent("", currentMode) }, // Stop
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier
                             .height(64.dp)
@@ -150,6 +163,75 @@ fun HomeScreen(viewModel: MainViewModel) {
             }
         }
     }
+
+    if (showSettingsDialog) {
+        SettingsDialog(
+            currentMode = currentMode,
+            onModeSelected = onModeSelected,
+            onDismiss = { showSettingsDialog = false }
+        )
+    }
+
+    pendingAction?.let { action ->
+        AlertDialog(
+            onDismissRequest = { viewModel.respondToApproval(false) },
+            title = { Text("Approve Action") },
+            text = { Text("The agent wants to execute a potentially sensitive action: ${action.type}. Do you approve?") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.respondToApproval(true) }) {
+                    Text("Approve")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.respondToApproval(false) }) {
+                    Text("Reject")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun SettingsDialog(
+    currentMode: ExecutionMode,
+    onModeSelected: (ExecutionMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Agent Autonomy") },
+        text = {
+            Column {
+                ExecutionMode.values().forEach { mode ->
+                    val isSelected = currentMode == mode
+                    val title = when (mode) {
+                        ExecutionMode.ALWAYS_EXECUTE -> "Always Execute"
+                        ExecutionMode.ASK_SOME_RECOMMENDED -> "Request for Some (Recommended)"
+                        ExecutionMode.ALWAYS_ASK -> "Always Ask"
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onModeSelected(mode)
+                                onDismiss()
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = isSelected, onClick = null)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(text = title)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 @Composable
