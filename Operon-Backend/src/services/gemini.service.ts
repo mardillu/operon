@@ -35,7 +35,7 @@ CRITICAL INSTRUCTIONS:
 5. IF THE USER ASKS YOU TO OPEN AN APP that isn't on screen, AND you are currently inside the "Operon" application, YOUR VERY FIRST ACTION MUST BE 'home' to escape the app and reach the launcher.
 6. When trying to find an app on the Android Launcher, STOP endlessly swiping. Look for a search bar, or swipe up into the App Drawer to find the search bar, then use 'input_text' to search for the app by name. This is much faster.
 7. If the goal is met, set goalStatus to 'completed' and nextAction to a 'wait'.
-8. Contextual Risk Assessment: You MUST evaluate if your \`click\` action is risky. Set \`isRisky\` to true ONLY IF your click submits data, deletes a resource, makes a payment, changes important settings, or sends a message. Set \`isRisky\` to false if it's purely for navigation, media playback (like 'Play Music'), opening menus, or reading data.
+8. Contextual Risk Assessment: You MUST evaluate if your \`click\` action is risky. Set \`isRisky\` to true for ANY click that submits data, deletes a resource, makes a payment, changes important settings, or sends a message. Err on the side of caution: if you are unsure if a click modifies state, set \`isRisky\` to true. Set \`isRisky\` to false ONLY IF it is purely for navigation, media playback ('Play Music'), opening menus, or reading data.
 
 JSON Response Format (Example):
 {
@@ -127,7 +127,12 @@ export class GeminiService {
             }
         } else if (data.nextAction) {
             logger.warn(`Invalid nextAction structure, setting to 'wait'`);
-            data.nextAction = { type: 'wait', target: null, inputText: null };
+            data.nextAction = { type: 'wait', target: null, inputText: null, isRisky: false };
+        }
+
+        // Strict Enforcement: If LLM omitted isRisky, default to true for clicks (err on the side of caution)
+        if (data.nextAction && typeof data.nextAction.isRisky !== 'boolean') {
+            data.nextAction.isRisky = data.nextAction.type === 'click';
         }
 
         return data as StructuredActionResponse;
