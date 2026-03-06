@@ -101,10 +101,52 @@ class AutopilotAccessibilityService : AccessibilityService() {
                 // Do nothing
             }
             ActionType.input_text -> {
-               // To perform actual text input reliably, we would match the text/bounds to the node and call ACTION_SET_TEXT
-               // For simplicity in this demo, it's omitted or requires finding the AccessibilityNodeInfo again to inject text
+                val boundsArray = action.target?.bounds
+                val textToInput = action.inputText
+
+                if (boundsArray != null && boundsArray.size == 4 && textToInput != null) {
+                    val rootNode = rootInActiveWindow
+                    if (rootNode != null) {
+                        val targetNode = findNodeByBounds(rootNode, boundsArray)
+                        if (targetNode != null) {
+                            val arguments = android.os.Bundle()
+                            arguments.putCharSequence(
+                                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                                textToInput
+                            )
+                            targetNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+                        } else {
+                            // Fallback: Just click the field to focus it
+                            val centerX = (boundsArray[0] + boundsArray[2]) / 2f
+                            val centerY = (boundsArray[1] + boundsArray[3]) / 2f
+                            dispatchClick(centerX, centerY)
+                        }
+                    }
+                }
             }
         }
+    }
+
+    private fun findNodeByBounds(node: AccessibilityNodeInfo, targetBounds: List<Int>): AccessibilityNodeInfo? {
+        val nodeBounds = Rect()
+        node.getBoundsInScreen(nodeBounds)
+
+        // Allow a tiny margin of error (e.g., 5px) for coordinate matching
+        if (Math.abs(nodeBounds.left - targetBounds[0]) < 5 &&
+            Math.abs(nodeBounds.top - targetBounds[1]) < 5 &&
+            Math.abs(nodeBounds.right - targetBounds[2]) < 5 &&
+            Math.abs(nodeBounds.bottom - targetBounds[3]) < 5) {
+            return node
+        }
+
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                val found = findNodeByBounds(child, targetBounds)
+                if (found != null) return found
+            }
+        }
+        return null
     }
 
     private fun dispatchClick(x: Float, y: Float) {
