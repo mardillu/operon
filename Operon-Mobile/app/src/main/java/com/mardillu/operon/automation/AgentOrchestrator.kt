@@ -92,8 +92,8 @@ class AgentOrchestrator {
                             }
                         }
                         ExecutionMode.ASK_SOME_RECOMMENDED -> {
-                            if (action.type == ActionType.click) {
-                                onLog("Awaiting user approval for sensitive action: ${action.type}")
+                            if (action.type == ActionType.click && action.isRisky == true) {
+                                onLog("Awaiting user approval for risky action: ${action.type}")
                                 shouldExecute = onRequireApproval(action)
                             }
                         }

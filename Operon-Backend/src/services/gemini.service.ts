@@ -19,6 +19,7 @@ export interface StructuredActionResponse {
         type: ActionType;
         target: ActionTarget | null;
         inputText: string | null;
+        isRisky: boolean;
     };
     confidence: number;
 }
@@ -34,6 +35,7 @@ CRITICAL INSTRUCTIONS:
 5. IF THE USER ASKS YOU TO OPEN AN APP that isn't on screen, AND you are currently inside the "Operon" application, YOUR VERY FIRST ACTION MUST BE 'home' to escape the app and reach the launcher.
 6. When trying to find an app on the Android Launcher, STOP endlessly swiping. Look for a search bar, or swipe up into the App Drawer to find the search bar, then use 'input_text' to search for the app by name. This is much faster.
 7. If the goal is met, set goalStatus to 'completed' and nextAction to a 'wait'.
+8. Contextual Risk Assessment: You MUST evaluate if your \`click\` action is risky. Set \`isRisky\` to true ONLY IF your click submits data, deletes a resource, makes a payment, changes important settings, or sends a message. Set \`isRisky\` to false if it's purely for navigation, media playback (like 'Play Music'), opening menus, or reading data.
 
 JSON Response Format (Example):
 {
@@ -46,7 +48,8 @@ JSON Response Format (Example):
       "contentDescription": null,
       "bounds": [100, 200, 300, 250]
     },
-    "inputText": null
+    "inputText": null,
+    "isRisky": true
   },
   "confidence": 0.95
 }`;
