@@ -36,7 +36,8 @@ enum class GoalStatus {
 data class AgentAction(
     val type: ActionType,
     val target: ActionTarget?,
-    val inputText: String?
+    val inputText: String?,
+    val isRisky: Boolean?
 )
 
 enum class ActionType {

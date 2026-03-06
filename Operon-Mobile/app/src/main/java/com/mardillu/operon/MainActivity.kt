@@ -47,11 +47,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             OperonTheme {
                 val navController = rememberNavController()
+                val preferencesManager = com.mardillu.operon.data.PreferencesManager(applicationContext)
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavGraph(
                         navController = navController,
                         startDestination = startDestination,
                         viewModel = viewModel,
+                        preferencesManager = preferencesManager,
                         onEnableAccessibility = {
                             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                         },

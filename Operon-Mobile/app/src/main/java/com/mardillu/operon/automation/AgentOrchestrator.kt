@@ -4,6 +4,9 @@ import android.util.Log
 import com.mardillu.operon.api.NetworkModule
 import com.mardillu.operon.data.AgentStepPayload
 import com.mardillu.operon.data.GoalStatus
+import com.mardillu.operon.data.AgentAction
+import com.mardillu.operon.data.ActionType
+import com.mardillu.operon.data.ExecutionMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,7 +24,12 @@ class AgentOrchestrator {
     var isRunning = false
         private set
 
-    fun start(goal: String, onLog: (String) -> Unit) {
+    fun start(
+        goal: String,
+        executionMode: ExecutionMode,
+        onRequireApproval: suspend (AgentAction) -> Boolean,
+        onLog: (String) -> Unit
+    ) {
         if (isRunning) return
         isRunning = true
         
@@ -73,11 +81,36 @@ class AgentOrchestrator {
                         break
                     }
 
-                    onLog("Executing action: ${response.nextAction.type}")
-                    accessibilityService.executeAction(response.nextAction)
+                    val action = response.nextAction
+                    
+                    var shouldExecute = true
+                    when (executionMode) {
+                        ExecutionMode.ALWAYS_ASK -> {
+                            if (action.type != ActionType.wait) {
+                                onLog("Awaiting user approval for action: ${action.type}")
+                                shouldExecute = onRequireApproval(action)
+                            }
+                        }
+                        ExecutionMode.ASK_SOME_RECOMMENDED -> {
+                            if (action.type == ActionType.click && action.isRisky == true) {
+                                onLog("Awaiting user approval for risky action: ${action.type}")
+                                shouldExecute = onRequireApproval(action)
+                            }
+                        }
+                        ExecutionMode.ALWAYS_EXECUTE -> {
+                            // Proceed
+                        }
+                    }
 
-                    // Wait 3 seconds for UI to settle before next step
-                    delay(3000)
+                    if (shouldExecute) {
+                        onLog("Executing action: ${action.type}")
+                        accessibilityService.executeAction(action)
+                        delay(3000)
+                    } else {
+                        onLog("Action rejected by user.")
+                        stop()
+                        break
+                    }
 
                 } catch (e: Exception) {
                     onLog("Error during orchestration loop: ${e.message}")
