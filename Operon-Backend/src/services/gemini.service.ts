@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export type ActionType = 'click' | 'scroll' | 'input_text' | 'back' | 'wait';
+export type ActionType = 'click' | 'scroll' | 'input_text' | 'back' | 'home' | 'recent_apps' | 'wait';
 
 export interface ActionTarget {
     text: string | null;
@@ -28,10 +28,12 @@ Your task is to analyze the provided UI tree and/or screenshot and determine the
 
 CRITICAL INSTRUCTIONS:
 1. You MUST ALWAYS respond with a VALID JSON object adhering strictly to the required schema. No conversational text whatsoever.
-2. The allowed 'type' values for 'nextAction' are strictly: 'click', 'scroll', 'input_text', 'back', 'wait'. Do not hallucinate other actions.
+2. The allowed 'type' values for 'nextAction' are strictly: 'click', 'scroll', 'input_text', 'back', 'home', 'recent_apps', 'wait'. Do not hallucinate other actions.
 3. Prioritize using the accessibility UI tree data (like text and contentDescription) to identify elements.
 4. If a match is found in the UI tree, return its bounds. NEVER guess coordinates; only use exact bounds from the UI tree or reliable detection.
-5. If the goal is met, set goalStatus to 'completed' and nextAction to a 'wait'.
+5. IF THE USER ASKS YOU TO OPEN AN APP that isn't on screen, AND you are currently inside the "Operon" application, YOUR VERY FIRST ACTION MUST BE 'home' to escape the app and reach the launcher.
+6. When trying to find an app on the Android Launcher, STOP endlessly swiping. Look for a search bar, or swipe up into the App Drawer to find the search bar, then use 'input_text' to search for the app by name. This is much faster.
+7. If the goal is met, set goalStatus to 'completed' and nextAction to a 'wait'.
 
 JSON Response Format (Example):
 {

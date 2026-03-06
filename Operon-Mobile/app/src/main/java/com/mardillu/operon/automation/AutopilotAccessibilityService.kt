@@ -89,22 +89,112 @@ class AutopilotAccessibilityService : AccessibilityService() {
             ActionType.back -> {
                 performGlobalAction(GLOBAL_ACTION_BACK)
             }
+            ActionType.home -> {
+                performGlobalAction(GLOBAL_ACTION_HOME)
+            }
+            ActionType.recent_apps -> {
+                performGlobalAction(GLOBAL_ACTION_RECENTS)
+            }
             ActionType.scroll -> {
-                // Simplified scroll: Swipe UP to scroll down
-                val metrics = resources.displayMetrics
-                val startX = metrics.widthPixels / 2f
-                val startY = metrics.heightPixels * 0.8f
-                val endY = metrics.heightPixels * 0.2f
-                dispatchSwipe(startX, startY, startX, endY)
+                val rootNode = rootInActiveWindow
+                var scrolled = false
+
+                if (rootNode != null) {
+                    // Try to find the specific target node if bounds were provided
+                    val boundsArray = action.target?.bounds
+                    if (boundsArray != null && boundsArray.size == 4) {
+                        val targetNode = findNodeByBounds(rootNode, boundsArray)
+                        if (targetNode != null && (targetNode.isScrollable || targetNode.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD))) {
+                            scrolled = targetNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                            if (!scrolled) {
+                                // sometimes the parent is the scrollable one
+                                scrolled = targetNode.parent?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
+                            }
+                        }
+                    }
+
+                    // Fallback 1: Find the first scrollable node in the entire tree
+                    if (!scrolled) {
+                        val scrollableNode = findFirstScrollableNode(rootNode)
+                        if (scrollableNode != null) {
+                            scrolled = scrollableNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                        }
+                    }
+                }
+
+                // Fallback 2: The generic physical swipe gesture if native scroll failed
+                if (!scrolled) {
+                    val metrics = resources.displayMetrics
+                    val startX = metrics.widthPixels / 2f
+                    val startY = metrics.heightPixels * 0.8f
+                    val endY = metrics.heightPixels * 0.2f
+                    dispatchSwipe(startX, startY, startX, endY)
+                }
             }
             ActionType.wait -> {
                 // Do nothing
             }
             ActionType.input_text -> {
-               // To perform actual text input reliably, we would match the text/bounds to the node and call ACTION_SET_TEXT
-               // For simplicity in this demo, it's omitted or requires finding the AccessibilityNodeInfo again to inject text
+                val boundsArray = action.target?.bounds
+                val textToInput = action.inputText
+
+                if (boundsArray != null && boundsArray.size == 4 && textToInput != null) {
+                    val rootNode = rootInActiveWindow
+                    if (rootNode != null) {
+                        val targetNode = findNodeByBounds(rootNode, boundsArray)
+                        if (targetNode != null) {
+                            val arguments = android.os.Bundle()
+                            arguments.putCharSequence(
+                                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                                textToInput
+                            )
+                            targetNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+                        } else {
+                            // Fallback: Just click the field to focus it
+                            val centerX = (boundsArray[0] + boundsArray[2]) / 2f
+                            val centerY = (boundsArray[1] + boundsArray[3]) / 2f
+                            dispatchClick(centerX, centerY)
+                        }
+                    }
+                }
             }
         }
+    }
+
+    private fun findNodeByBounds(node: AccessibilityNodeInfo, targetBounds: List<Int>): AccessibilityNodeInfo? {
+        val nodeBounds = Rect()
+        node.getBoundsInScreen(nodeBounds)
+
+        // Allow a tiny margin of error (e.g., 5px) for coordinate matching
+        if (Math.abs(nodeBounds.left - targetBounds[0]) < 5 &&
+            Math.abs(nodeBounds.top - targetBounds[1]) < 5 &&
+            Math.abs(nodeBounds.right - targetBounds[2]) < 5 &&
+            Math.abs(nodeBounds.bottom - targetBounds[3]) < 5) {
+            return node
+        }
+
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                val found = findNodeByBounds(child, targetBounds)
+                if (found != null) return found
+            }
+        }
+        return null
+    }
+
+    private fun findFirstScrollableNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        if (node.isScrollable || node.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD)) {
+            return node
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                val found = findFirstScrollableNode(child)
+                if (found != null) return found
+            }
+        }
+        return null
     }
 
     private fun dispatchClick(x: Float, y: Float) {

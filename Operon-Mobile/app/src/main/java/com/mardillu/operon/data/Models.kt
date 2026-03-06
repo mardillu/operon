@@ -40,7 +40,7 @@ data class AgentAction(
 )
 
 enum class ActionType {
-    click, scroll, input_text, back, wait
+    click, scroll, input_text, back, home, recent_apps, wait
 }
 
 @JsonClass(generateAdapter = true)
