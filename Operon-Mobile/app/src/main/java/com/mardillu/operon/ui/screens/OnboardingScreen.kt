@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 fun OnboardingScreen(
     onEnableAccessibility: () -> Unit,
     onRequestScreenCapture: () -> Unit,
+    onRequestOverlayPermission: () -> Unit,
     onProceed: () -> Unit
 ) {
     Scaffold(
@@ -56,7 +57,14 @@ fun OnboardingScreen(
                 description = "Required to interact with UI elements on your behalf.",
                 onClick = onEnableAccessibility
             )
-            
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PermissionCard(
+                title = "Draw Over Other Apps",
+                description = "Required to ask for confirmation when the agent is operating over other applications.",
+                onClick = onRequestOverlayPermission
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
             PermissionCard(

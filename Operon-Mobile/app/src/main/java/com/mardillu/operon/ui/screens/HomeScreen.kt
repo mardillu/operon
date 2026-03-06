@@ -40,7 +40,6 @@ fun HomeScreen(
 ) {
     val logs by viewModel.logs.collectAsState()
     val isRunning by viewModel.isRunning.collectAsState()
-    val pendingAction by viewModel.pendingAction.collectAsState()
     
     val context = LocalContext.current
     var isListening by remember { mutableStateOf(false) }
@@ -169,24 +168,6 @@ fun HomeScreen(
             currentMode = currentMode,
             onModeSelected = onModeSelected,
             onDismiss = { showSettingsDialog = false }
-        )
-    }
-
-    pendingAction?.let { action ->
-        AlertDialog(
-            onDismissRequest = { viewModel.respondToApproval(false) },
-            title = { Text("Approve Action") },
-            text = { Text("The agent wants to execute a potentially sensitive action: ${action.type}. Do you approve?") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.respondToApproval(true) }) {
-                    Text("Approve")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.respondToApproval(false) }) {
-                    Text("Reject")
-                }
-            }
         )
     }
 }

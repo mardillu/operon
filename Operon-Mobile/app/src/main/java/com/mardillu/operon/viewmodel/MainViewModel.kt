@@ -21,11 +21,6 @@ class MainViewModel : ViewModel() {
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
-    private val _pendingAction = MutableStateFlow<AgentAction?>(null)
-    val pendingAction: StateFlow<AgentAction?> = _pendingAction.asStateFlow()
-
-    private var approvalDeferred: CompletableDeferred<Boolean>? = null
-
     fun toggleAgent(goal: String, currentMode: ExecutionMode) {
         if (orchestrator.isRunning) {
             orchestrator.stop()
@@ -41,32 +36,14 @@ class MainViewModel : ViewModel() {
             orchestrator.start(
                 goal = goal,
                 executionMode = currentMode,
-                onRequireApproval = { action -> requestUserApproval(action) },
                 onLog = { logMessage ->
                     addLog(logMessage)
                 },
                 onFinish = {
                     _isRunning.value = false
-                    _pendingAction.value = null
-                    approvalDeferred?.cancel()
-                    approvalDeferred = null
                 }
             )
         }
-    }
-
-    private suspend fun requestUserApproval(action: AgentAction): Boolean {
-        val deferred = CompletableDeferred<Boolean>()
-        approvalDeferred = deferred
-        _pendingAction.value = action
-        val result = deferred.await()
-        _pendingAction.value = null
-        approvalDeferred = null
-        return result
-    }
-
-    fun respondToApproval(approved: Boolean) {
-        approvalDeferred?.complete(approved)
     }
 
     private fun addLog(message: String) {
