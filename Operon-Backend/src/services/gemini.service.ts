@@ -116,7 +116,7 @@ export class GeminiService {
             throw new Error('Invalid JSON format returned by Gemini.');
         }
 
-        const allowedActions = ['click', 'scroll', 'input_text', 'back', 'wait'];
+        const allowedActions = ['click', 'scroll', 'input_text', 'back', 'home', 'recent_apps', 'wait'];
         if (data.nextAction && typeof data.nextAction === 'object') {
             if (!allowedActions.includes(data.nextAction.type)) {
                 logger.warn(`Invalid action type hallucinated: ${data.nextAction.type}, defaulting to 'wait'`);
