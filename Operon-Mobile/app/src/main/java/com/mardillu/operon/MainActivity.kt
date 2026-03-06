@@ -5,6 +5,7 @@ import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.provider.Settings
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -59,6 +60,10 @@ class MainActivity : ComponentActivity() {
                         },
                         onRequestScreenCapture = {
                             requestScreenCapture()
+                        },
+                        onRequestOverlayPermission = {
+                            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+                            startActivity(intent)
                         }
                     )
                 }

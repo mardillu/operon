@@ -27,13 +27,15 @@ fun AppNavGraph(
     viewModel: MainViewModel,
     preferencesManager: PreferencesManager,
     onEnableAccessibility: () -> Unit,
-    onRequestScreenCapture: () -> Unit
+    onRequestScreenCapture: () -> Unit,
+    onRequestOverlayPermission: () -> Unit
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(
                 onEnableAccessibility = onEnableAccessibility,
                 onRequestScreenCapture = onRequestScreenCapture,
+                onRequestOverlayPermission = onRequestOverlayPermission,
                 onProceed = { navController.navigate(Routes.EXECUTION_MODE) }
             )
         }

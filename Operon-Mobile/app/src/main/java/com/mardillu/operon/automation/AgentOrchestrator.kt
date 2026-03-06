@@ -7,6 +7,7 @@ import com.mardillu.operon.data.GoalStatus
 import com.mardillu.operon.data.AgentAction
 import com.mardillu.operon.data.ActionType
 import com.mardillu.operon.data.ExecutionMode
+import com.mardillu.operon.ui.components.GlobalOverlayManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,8 +28,8 @@ class AgentOrchestrator {
     fun start(
         goal: String,
         executionMode: ExecutionMode,
-        onRequireApproval: suspend (AgentAction) -> Boolean,
-        onLog: (String) -> Unit
+        onLog: (String) -> Unit,
+        onFinish: () -> Unit
     ) {
         if (isRunning) return
         isRunning = true
@@ -36,12 +37,13 @@ class AgentOrchestrator {
         val sessionId = UUID.randomUUID().toString()
 
         automationJob = scope.launch {
-            onLog("Starting session $sessionId for goal: $goal")
-            
-            while (isActive && isRunning) {
-                try {
-                    val accessibilityService = AutopilotAccessibilityService.instance
-                    val screenCaptureService = ScreenCaptureService.instance
+            try {
+                onLog("Starting session $sessionId for goal: $goal")
+                
+                while (isActive && isRunning) {
+                    try {
+                        val accessibilityService = AutopilotAccessibilityService.instance
+                        val screenCaptureService = ScreenCaptureService.instance
 
                     if (accessibilityService == null) {
                         onLog("Error: Accessibility Service is not running/bound.")
@@ -87,14 +89,14 @@ class AgentOrchestrator {
                     when (executionMode) {
                         ExecutionMode.ALWAYS_ASK -> {
                             if (action.type != ActionType.wait) {
-                                onLog("Awaiting user approval for action: ${action.type}")
-                                shouldExecute = onRequireApproval(action)
+                                onLog("Awaiting user approval for action: ${action.type} via Global Overlay")
+                                shouldExecute = GlobalOverlayManager.showApprovalDialog(accessibilityService, action).await()
                             }
                         }
                         ExecutionMode.ASK_SOME_RECOMMENDED -> {
                             if (action.type == ActionType.click && action.isRisky == true) {
-                                onLog("Awaiting user approval for risky action: ${action.type}")
-                                shouldExecute = onRequireApproval(action)
+                                onLog("Awaiting user approval for risky action: ${action.type} via Global Overlay")
+                                shouldExecute = GlobalOverlayManager.showApprovalDialog(accessibilityService, action).await()
                             }
                         }
                         ExecutionMode.ALWAYS_EXECUTE -> {
@@ -112,11 +114,15 @@ class AgentOrchestrator {
                         break
                     }
 
-                } catch (e: Exception) {
-                    onLog("Error during orchestration loop: ${e.message}")
-                    Log.e("AgentOrchestrator", "Loop error", e)
-                    delay(3000)
+                    } catch (e: Exception) {
+                        onLog("Error during orchestration loop: ${e.message}")
+                        Log.e("AgentOrchestrator", "Loop error", e)
+                        delay(3000)
+                    }
                 }
+            } finally {
+                isRunning = false
+                onFinish()
             }
         }
     }

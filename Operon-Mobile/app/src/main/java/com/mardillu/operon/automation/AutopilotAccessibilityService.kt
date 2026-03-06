@@ -141,19 +141,34 @@ class AutopilotAccessibilityService : AccessibilityService() {
                 if (boundsArray != null && boundsArray.size == 4 && textToInput != null) {
                     val rootNode = rootInActiveWindow
                     if (rootNode != null) {
-                        val targetNode = findNodeByBounds(rootNode, boundsArray)
-                        if (targetNode != null) {
+                        val centerX = (boundsArray[0] + boundsArray[2]) / 2
+                        val centerY = (boundsArray[1] + boundsArray[3]) / 2
+
+                        // Robust method 1: Find an editable node that contains the center point
+                        var editableNode = findEditableNodeAtCoordinate(rootNode, centerX, centerY)
+                        
+                        // Fallback method 2: Find exact node by bounds
+                        if (editableNode == null) {
+                            val targetNode = findNodeByBounds(rootNode, boundsArray)
+                            if (targetNode != null) {
+                                editableNode = findEditableNode(targetNode) ?: targetNode
+                            }
+                        }
+
+                        if (editableNode != null && (editableNode.isEditable || editableNode.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_TEXT))) {
                             val arguments = android.os.Bundle()
                             arguments.putCharSequence(
                                 AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
                                 textToInput
                             )
-                            targetNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+                            val success = editableNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+                            if (!success) {
+                                // Ultimate Fallback: Just click the field to focus it
+                                dispatchClick(centerX.toFloat(), centerY.toFloat())
+                            }
                         } else {
-                            // Fallback: Just click the field to focus it
-                            val centerX = (boundsArray[0] + boundsArray[2]) / 2f
-                            val centerY = (boundsArray[1] + boundsArray[3]) / 2f
-                            dispatchClick(centerX, centerY)
+                            // Ultimate Fallback: Just click the field to focus it
+                            dispatchClick(centerX.toFloat(), centerY.toFloat())
                         }
                     }
                 }
@@ -177,6 +192,45 @@ class AutopilotAccessibilityService : AccessibilityService() {
             val child = node.getChild(i)
             if (child != null) {
                 val found = findNodeByBounds(child, targetBounds)
+                if (found != null) return found
+            }
+        }
+        return null
+    }
+
+    private fun findEditableNodeAtCoordinate(node: AccessibilityNodeInfo, x: Int, y: Int): AccessibilityNodeInfo? {
+        val nodeBounds = Rect()
+        node.getBoundsInScreen(nodeBounds)
+
+        if (!nodeBounds.contains(x, y)) {
+            return null
+        }
+
+        // It contains the point. Does it have an editable child that contains the point?
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                val found = findEditableNodeAtCoordinate(child, x, y)
+                if (found != null) return found
+            }
+        }
+
+        // If no child is editable at this coordinate, check if this node itself is editable
+        if (node.isEditable || node.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_TEXT)) {
+            return node
+        }
+        
+        return null
+    }
+
+    private fun findEditableNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        if (node.isEditable || node.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_TEXT)) {
+            return node
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                val found = findEditableNode(child)
                 if (found != null) return found
             }
         }
