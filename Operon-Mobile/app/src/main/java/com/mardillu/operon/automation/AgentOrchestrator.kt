@@ -28,7 +28,8 @@ class AgentOrchestrator {
         goal: String,
         executionMode: ExecutionMode,
         onRequireApproval: suspend (AgentAction) -> Boolean,
-        onLog: (String) -> Unit
+        onLog: (String) -> Unit,
+        onFinish: () -> Unit
     ) {
         if (isRunning) return
         isRunning = true
@@ -36,12 +37,13 @@ class AgentOrchestrator {
         val sessionId = UUID.randomUUID().toString()
 
         automationJob = scope.launch {
-            onLog("Starting session $sessionId for goal: $goal")
-            
-            while (isActive && isRunning) {
-                try {
-                    val accessibilityService = AutopilotAccessibilityService.instance
-                    val screenCaptureService = ScreenCaptureService.instance
+            try {
+                onLog("Starting session $sessionId for goal: $goal")
+                
+                while (isActive && isRunning) {
+                    try {
+                        val accessibilityService = AutopilotAccessibilityService.instance
+                        val screenCaptureService = ScreenCaptureService.instance
 
                     if (accessibilityService == null) {
                         onLog("Error: Accessibility Service is not running/bound.")
@@ -112,11 +114,15 @@ class AgentOrchestrator {
                         break
                     }
 
-                } catch (e: Exception) {
-                    onLog("Error during orchestration loop: ${e.message}")
-                    Log.e("AgentOrchestrator", "Loop error", e)
-                    delay(3000)
+                    } catch (e: Exception) {
+                        onLog("Error during orchestration loop: ${e.message}")
+                        Log.e("AgentOrchestrator", "Loop error", e)
+                        delay(3000)
+                    }
                 }
+            } finally {
+                isRunning = false
+                onFinish()
             }
         }
     }

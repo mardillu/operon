@@ -44,13 +44,12 @@ class MainViewModel : ViewModel() {
                 onRequireApproval = { action -> requestUserApproval(action) },
                 onLog = { logMessage ->
                     addLog(logMessage)
-                    // If orchestrator stopped itself, sync state
-                    if (!orchestrator.isRunning && _isRunning.value) {
-                        _isRunning.value = false
-                        _pendingAction.value = null
-                        approvalDeferred?.cancel()
-                        approvalDeferred = null
-                    }
+                },
+                onFinish = {
+                    _isRunning.value = false
+                    _pendingAction.value = null
+                    approvalDeferred?.cancel()
+                    approvalDeferred = null
                 }
             )
         }
