@@ -7,7 +7,8 @@ data class AgentStepPayload(
     val sessionId: String,
     val goal: String,
     val screenshotBase64: String?,
-    val uiTree: UiNodeInfo?
+    val uiTree: UiNodeInfo?,
+    val pastActions: List<String>? = emptyList()
 )
 
 @JsonClass(generateAdapter = true)

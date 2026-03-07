@@ -7,6 +7,7 @@ export interface AgentStepPayload {
     goal: string;
     screenshotBase64?: string;
     uiTree?: any;
+    pastActions?: string[];
 }
 
 export class AgentService {
@@ -19,13 +20,13 @@ export class AgentService {
     }
 
     async determineNextAction(payload: AgentStepPayload): Promise<StructuredActionResponse> {
-        const { sessionId, goal, screenshotBase64, uiTree } = payload;
+        const { sessionId, goal, screenshotBase64, uiTree, pastActions } = payload;
 
         await this.firestoreService.saveSessionState(sessionId, { goal, lastUpdated: new Date().toISOString() });
 
         try {
             logger.info(`Analyzing screen for session ${sessionId}...`);
-            const result = await this.geminiService.analyzeScreen(goal, uiTree, screenshotBase64);
+            const result = await this.geminiService.analyzeScreen(goal, uiTree, screenshotBase64, pastActions);
 
             this.validateActionSafety(result, uiTree);
 
