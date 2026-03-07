@@ -108,7 +108,12 @@ class AgentOrchestrator {
 
                     if (shouldExecute) {
                         onLog("Executing action: ${action.type}")
-                        pastActions.add(action.type.name)
+                        val actionDesc = if (action.type == ActionType.input_text && action.inputText != null) {
+                            "${action.type.name} ('${action.inputText}')"
+                        } else {
+                            action.type.name
+                        }
+                        pastActions.add(actionDesc)
                         accessibilityService.executeAction(action)
                         delay(3000)
                     } else {
