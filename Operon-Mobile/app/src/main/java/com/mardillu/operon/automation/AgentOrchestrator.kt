@@ -35,6 +35,7 @@ class AgentOrchestrator {
         isRunning = true
         
         val sessionId = UUID.randomUUID().toString()
+        val pastActions = mutableListOf<String>()
 
         automationJob = scope.launch {
             try {
@@ -65,7 +66,8 @@ class AgentOrchestrator {
                         sessionId = sessionId,
                         goal = goal,
                         screenshotBase64 = screenshot,
-                        uiTree = uiTree
+                        uiTree = uiTree,
+                        pastActions = pastActions.toList()
                     )
 
                     onLog("Sending payload to Agent Brain...")
@@ -106,6 +108,7 @@ class AgentOrchestrator {
 
                     if (shouldExecute) {
                         onLog("Executing action: ${action.type}")
+                        pastActions.add(action.type.name)
                         accessibilityService.executeAction(action)
                         delay(3000)
                     } else {

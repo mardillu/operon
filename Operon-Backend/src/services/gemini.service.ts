@@ -34,8 +34,9 @@ CRITICAL INSTRUCTIONS:
 4. If a match is found in the UI tree, return its bounds. NEVER guess coordinates; only use exact bounds from the UI tree or reliable detection.
 5. IF THE USER ASKS YOU TO OPEN AN APP that isn't on screen, AND you are currently inside the "Operon" application, YOUR VERY FIRST ACTION MUST BE 'home' to escape the app and reach the launcher.
 6. When trying to find an app on the Android Launcher, STOP endlessly swiping. Look for a search bar, or swipe up into the App Drawer to find the search bar, then use 'input_text' to search for the app by name. This is much faster.
-7. Goal Completion Check: BEFORE deciding on an action, carefully evaluate if the screen ALREADY shows that the user's goal has been accomplished (e.g., the message 'hello' is already visible in the chat history, the setting is already toggled, or the app is already open). If the goal's intended final state is already visible on the screen, you MUST IMMEDIATELY return goalStatus: 'completed' and nextAction: 'wait'. Do not repeat actions that have already been executed.
+7. If the goal is met, set goalStatus to 'completed' and nextAction to a 'wait'.
 8. Contextual Risk Assessment: You MUST evaluate if your \`click\` action is risky. Set \`isRisky\` to true for ANY click that submits data, deletes a resource, makes a payment, changes important settings, or sends a message. Err on the side of caution: if you are unsure if a click modifies state, set \`isRisky\` to true. Set \`isRisky\` to false ONLY IF it is purely for navigation, media playback ('Play Music'), opening menus, or reading data.
+9. Memory Check: Look at your Past Actions. If your last action was the definitive step to achieve the goal (e.g., clicking 'Send', 'Submit', 'Delete'), and there is no visible error message on the current screen, you MUST return \`goalStatus: completed\` and \`type: wait\` instead of repeating the action.
 
 JSON Response Format (Example):
 {
@@ -70,10 +71,14 @@ export class GeminiService {
         });
     }
 
-    async analyzeScreen(goal: string, uiTree: any, screenshotBase64: string | undefined): Promise<StructuredActionResponse> {
+    async analyzeScreen(goal: string, uiTree: any, screenshotBase64: string | undefined, pastActions?: string[]): Promise<StructuredActionResponse> {
         const promptParts: any[] = [
             `User Goal: ${goal}`
         ];
+
+        if (pastActions && pastActions.length > 0) {
+            promptParts.push(`Past Actions: ${JSON.stringify(pastActions)}`);
+        }
 
         if (uiTree) {
             promptParts.push(`UI Tree JSON:\n${JSON.stringify(uiTree)}`);
