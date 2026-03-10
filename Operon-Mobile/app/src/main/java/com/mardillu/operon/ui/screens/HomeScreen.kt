@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Info
 import com.mardillu.operon.data.ExecutionMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -159,6 +160,23 @@ fun HomeScreen(
                         }
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Rounded.Info, 
+                        contentDescription = "AI Disclaimer",
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "AI agents may produce inaccurate results. Verify actions.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -202,7 +220,22 @@ private fun SettingsDialog(
                     ) {
                         RadioButton(selected = isSelected, onClick = null)
                         Spacer(modifier = Modifier.width(16.dp))
-                        Text(text = title)
+                        Column {
+                            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+                            if (mode == ExecutionMode.ALWAYS_EXECUTE) {
+                                Text(
+                                    text = "Not recommended. Agent will execute committal actions blindly without prompting you.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            } else if (mode == ExecutionMode.ASK_SOME_RECOMMENDED) {
+                                Text(
+                                    text = "Agent infers risky actions and prompts you before sending/submitting limits.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
