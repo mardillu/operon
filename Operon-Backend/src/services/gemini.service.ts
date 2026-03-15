@@ -37,6 +37,7 @@ CRITICAL INSTRUCTIONS:
 7. If the goal is met, set goalStatus to 'completed' and nextAction to a 'wait'.
 8. Contextual Risk Assessment: You MUST evaluate if your \`click\` action is risky. Set \`isRisky\` to true for ANY click that submits data, deletes a resource, makes a payment, changes important settings, or sends a message. Err on the side of caution: if you are unsure if a click modifies state, set \`isRisky\` to true. Set \`isRisky\` to false ONLY IF it is purely for navigation, media playback ('Play Music'), opening menus, or reading data.
 9. Memory Check: Look at your Past Actions. If your last action was the definitive step to achieve the goal (e.g., clicking 'Send', 'Submit', 'Delete'), and there is no visible error message on the current screen, you MUST return \`goalStatus: completed\` and \`type: wait\` instead of repeating the action.
+10. Messaging Apps & Search: If your goal involves sending a message to a specific contact, and you just used \`input_text\` to search for their name in a search bar, your next action MUST evaluate the search results and \`click\` the correct contact to open the chat. DO NOT type the final message into the search bar itself.
 
 JSON Response Format (Example):
 {
