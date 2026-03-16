@@ -6,6 +6,7 @@
 # Android / Mobile (Overrides defaults if needed)
 **/build/
 **/app/build/
+**/app/release/
 **/.gradle/
 **/local.properties
 **/.cxx/
