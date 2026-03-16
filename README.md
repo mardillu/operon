@@ -2,6 +2,22 @@
 
 Operon is an experimental AI Agent Copilot that acts as a generalized assistant for your Android device. Driven by Google's Gemini 2.5 models (Pro and Flash), Operon utilizes the Android Accessibility Service and MediaProjection APIs to "see" your screen and execute actions (clicking, typing, scrolling, navigating) on your behalf to achieve complex goals across any app.
 
+---
+
+## 🧪 How to Test
+
+To try Operon on your device immediately:
+
+1. **Download the APK**: Get the latest build from the repository at [Operon-Mobile/releases/operon-release.apk](file:///Users/mardillu/AndroidStudioProjects/Operon/Operon-Mobile/releases/operon-release.apk).
+2. **Install & Launch**: Install the APK on a physical Android device (Android 14+ recommended).
+3. **Grant Permissions**: Operon requires three critical permissions to function:
+   - **Accessibility Service**: To read and interact with the UI.
+   - **Screen Recording**: To see what's happening on your screen.
+   - **Display Over Other Apps**: To show the global approval overlay.
+4. **Define a Goal**: Enter a task in the home screen (e.g., "Open Spotify and play some jazz") and watch the agent navigate your device!
+
+---
+
 The project is split into two primary components:
 1. **Operon-Backend**: A robust TypeScript/Express server that securely interfaces with Google Cloud Vertex AI to perform visual and structural reasoning on UI trees.
 2. **Operon-Mobile**: The native Android application (built with Jetpack Compose) that captures screen states, requests instructions from the backend, and executes them autonomously.
